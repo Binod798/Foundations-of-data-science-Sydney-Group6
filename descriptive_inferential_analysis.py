@@ -58,4 +58,48 @@ if "bat_landing_number" in df2.columns:
 # Create directory for charts
 charts_dir = Path("bat_rat_charts")
 charts_dir.mkdir(parents=True, exist_ok=True)
+
+# Chart: bat_landing_to_food
+if "bat_landing_to_food" in df1.columns:
+    plt.figure()
+    df1["bat_landing_to_food"].dropna().astype(float).hist(bins=30)
+    plt.title("Descriptive Statistics – Histogram – Distribution of Bat Landing-to-Food Delay (s)")
+    plt.xlabel("Seconds from landing to approaching food")
+    plt.ylabel("Frequency")
+    plt.tight_layout()
+    plt.savefig(charts_dir / "d1_hist_bat_landing_to_food.png")
+    plt.close()
+
+# Chart: seconds_after_rat_arrival
+if "seconds_after_rat_arrival" in df1.columns:
+    plt.hist(df1["seconds_after_rat_arrival"].dropna(), bins=20, color="orange", edgecolor="black")
+    plt.title("Descriptive Statistics - Histogram - Seconds After Rat Arrival")
+    plt.xlabel("Seconds")
+    plt.ylabel("Frequency")
+    plt.savefig(charts_dir /"d1_hist_seconds_after_rat_arrival.png")
+    plt.close()
+    
+    # Grouped Bar Chart (Risk vs Reward)
+    risk_reward = pd.crosstab(df1["risk"], df1["reward"])
+    risk_reward.plot(kind="bar")
+    plt.title("Descriptive Statistics - Grouped Bar Chart - Risk vs Reward")
+    plt.xlabel("Risk Behaviour")
+    plt.ylabel("Count")
+    for i, row in enumerate(risk_reward.values):
+        for j, val in enumerate(row):
+            plt.text(i + j*0.2, val + 0.5, str(val), ha="center")
+    plt.savefig(charts_dir /"d1_grouped_bar_risk_reward.png")
+    plt.close()
+
+# Bar chart: risk countings
+if "risk" in df1.columns:
+    plt.figure()
+    df1["risk"].value_counts(dropna=False).sort_index().plot(kind="bar")
+    plt.title("Descriptive Statistics – Bar Diagram – Counts of Risk-taking (1) vs Risk-avoidance (0)")
+    plt.xlabel("Risk (0=avoidance, 1=risk-taking)")
+    plt.ylabel("Count of bat landings")
+    plt.tight_layout()
+    plt.savefig(charts_dir / "d1_bar_risk_counts.png")
+    plt.close()
+
     
