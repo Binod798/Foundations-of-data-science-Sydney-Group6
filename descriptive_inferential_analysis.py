@@ -136,3 +136,161 @@ print("Descriptive charts saved in:", charts_dir)
 infer_results = []
 summary_dir = Path(".")
 summary_dir.mkdir(exist_ok=True)
+# Inferential analysis
+
+# --- 3.1 Confidence interval for proportion of risk-taking (binary) ---
+if "risk" in df1.columns:
+    # dropna and convert to ints (0/1)
+    risk_series = df1["risk"].dropna().astype(int)
+    n_risk = len(risk_series)
+    successes = int(risk_series.sum())  # number with risk==1
+    prop = successes / n_risk if n_risk > 0 else np.nan
+
+    # proportion confidence intervals: use statsmodels proportion_confint (several methods)
+    ci_norm = proportion.proportion_confint(count=successes, nobs=n_risk, alpha=0.05, method='normal')
+    ci_wilson = proportion.proportion_confint(count=successes, nobs=n_risk, alpha=0.05, method='wilson')
+
+    infer_results.append("Proportion of risk-taking (dataset1):")
+    infer_results.append(f"  n = {n_risk}, successes = {successes}, proportion = {prop:.4f}")
+    infer_results.append(f"  95% CI (normal approx) = ({ci_norm[0]:.4f}, {ci_norm[1]:.4f})")
+    infer_results.append(f"  95% CI (Wilson) = ({ci_wilson[0]:.4f}, {ci_wilson[1]:.4f})")
+else:
+    infer_results.append("Dataset1: 'risk' column not found — cannot compute proportion CI.")
+    # Inferential analysis
+
+# --- 3.1 Confidence interval for proportion of risk-taking (binary) ---
+if "risk" in df1.columns:
+    # dropna and convert to ints (0/1)
+    risk_series = df1["risk"].dropna().astype(int)
+    n_risk = len(risk_series)
+    successes = int(risk_series.sum())  # number with risk==1
+    prop = successes / n_risk if n_risk > 0 else np.nan
+
+    # proportion confidence intervals: use statsmodels proportion_confint (several methods)
+    ci_norm = proportion.proportion_confint(count=successes, nobs=n_risk, alpha=0.05, method='normal')
+    ci_wilson = proportion.proportion_confint(count=successes, nobs=n_risk, alpha=0.05, method='wilson')
+
+    infer_results.append("Proportion of risk-taking (dataset1):")
+    infer_results.append(f"  n = {n_risk}, successes = {successes}, proportion = {prop:.4f}")
+    infer_results.append(f"  95% CI (normal approx) = ({ci_norm[0]:.4f}, {ci_norm[1]:.4f})")
+    infer_results.append(f"  95% CI (Wilson) = ({ci_wilson[0]:.4f}, {ci_wilson[1]:.4f})")
+else:
+    infer_results.append("Dataset1: 'risk' column not found — cannot compute proportion CI.")
+
+# --- 3.2 Confidence interval for mean 'bat_landing_to_food' (z-based and t-based) ---
+if "bat_landing_to_food" in df1.columns:
+    s = df1["bat_landing_to_food"].dropna().astype(float)
+    n = len(s)
+    if n > 0:
+        mean_s = float(s.mean())
+        sd_s = float(s.std(ddof=1))  # sample standard deviation
+        se = sd_s / math.sqrt(n)
+
+        # z-based 95% by using norm.ppf
+        zstar = st.norm.ppf(1 - 0.05/2)
+        ci_z_lower = mean_s - zstar * se
+        ci_z_upper = mean_s + zstar * se
+
+        # t-based 95% using scipy t distribution
+        tstar = st.t.ppf(1 - 0.05/2, df=n-1)
+        ci_t_lower = mean_s - tstar * se
+        ci_t_upper = mean_s + tstar * se
+
+        # Alternatively use statsmodels internal _zconfint_generic (requires summary stats)
+        try:
+            ci_z_generic = _zconfint_generic(mean_s, sd_s / math.sqrt(n), alpha=0.05, alternative='two-sided')
+        except Exception:
+            ci_z_generic = (ci_z_lower, ci_z_upper)
+
+        infer_results.append("Mean of bat_landing_to_food (dataset1):")
+        infer_results.append(f"  n = {n}, mean = {mean_s:.4f} s, sd = {sd_s:.4f} s, se = {se:.6f}")
+        infer_results.append(f"  95% CI (z-based using norm.ppf) = ({ci_z_lower:.4f}, {ci_z_upper:.4f})")
+        infer_results.append(f"  95% CI (t-based) = ({ci_t_lower:.4f}, {ci_t_upper:.4f})")
+        infer_results.append(f"  95% CI (statsmodels _zconfint_generic) = ({ci_z_generic[0]:.4f}, {ci_z_generic[1]:.4f})")
+    else:
+        infer_results.append("Dataset1: bat_landing_to_food has no non-missing values.")
+else:
+    infer_results.append("Dataset1: 'bat_landing_to_food' column not found — cannot compute mean CI.")
+
+# --- 3.3 Hypothesis test: Two-sample t-test on bat landings per 30-min periods (rats present vs absent) ---
+if set(["bat_landing_number", "rat_arrival_number"]).issubset(df2.columns):
+    # Define groups: rat_arrival_number == 0 vs >0
+    group_no_rats = df2.loc[df2["rat_arrival_number"].fillna(0) == 0, "bat_landing_number"].dropna().astype(float)
+    group_with_rats = df2.loc[df2["rat_arrival_number"].fillna(0) > 0, "bat_landing_number"].dropna().astype(float)
+
+    n0 = len(group_no_rats)
+    n1 = len(group_with_rats)
+
+    infer_results.append("Two-sample t-test: bat landings per 30-min (no rats vs rats present):")
+    infer_results.append(f"  n(no rats) = {n0}, mean = {group_no_rats.mean():.4f}, sd = {group_no_rats.std(ddof=1):.4f}")
+    infer_results.append(f"  n(with rats) = {n1}, mean = {group_with_rats.mean():.4f}, sd = {group_with_rats.std(ddof=1):.4f}")
+
+    # Check if both groups have >1 observation
+    if n0 > 1 and n1 > 1:
+        # Use scipy.stats.ttest_ind (Welch's t-test by default with equal_var=False)
+        t_stat, p_val = st.ttest_ind(group_no_rats, group_with_rats, equal_var=False, nan_policy='omit')
+        infer_results.append(f"  t-statistic = {t_stat:.4f}, p-value = {p_val:.6f} (two-sided)")
+
+        # directionality: if we expect mean(no_rats) > mean(with_rats), we can report one-sided p
+        # compute one-sided p if two-sided p < 1
+        if np.isfinite(p_val):
+            # one-sided p for mean(no_rats) > mean(with_rats)
+            # If observed mean difference is positive, one-sided p = p_val/2 else = 1 - p_val/2 (but better to compute via t cdf)
+            # We'll compute via t distribution approx using statistic and df via Welch-Satterthwaite
+            # Compute Welch-Satterthwaite df:
+            s0 = group_no_rats.var(ddof=1)
+            s1 = group_with_rats.var(ddof=1)
+            numerator = (s0/n0 + s1/n1)**2
+            denom = (s0**2)/((n0**2)*(n0-1)) + (s1**2)/((n1**2)*(n1-1)) if (n0>1 and n1>1) else np.nan
+            df_welch = numerator / denom if denom != 0 and not np.isnan(denom) else min(n0-1, n1-1)
+            # one-sided p for alternative mean_no_rats > mean_with_rats:
+            one_sided_p = 1 - st.t.cdf(t_stat, df=df_welch) if t_stat > 0 else st.t.cdf(t_stat, df=df_welch)
+            infer_results.append(f"  Welch df approx = {df_welch:.2f}, one-sided p (no_rats > with_rats) = {one_sided_p:.6f}")
+    else:
+        infer_results.append("  Not enough data in one or both groups to perform t-test.")
+else:
+    infer_results.append("Dataset2: required columns 'bat_landing_number' or 'rat_arrival_number' missing — cannot run two-sample t-test.")
+
+# --- 3.4 One-sample t-test: mean bat_landing_to_food greater than baseline (e.g., 2 seconds) ---
+# This is a domain choice: here we test H0: mean = 2s vs H1: mean > 2s (bats show non-trivial vigilance)
+baseline = 2.0
+if "bat_landing_to_food" in df1.columns:
+    arr = df1["bat_landing_to_food"].dropna().astype(float)
+    if len(arr) > 1:
+        t1_stat, p1_two = st.ttest_1samp(arr, popmean=baseline, nan_policy='omit')
+        # For one-sided alternative mean > baseline:
+        if np.isfinite(p1_two):
+            if t1_stat > 0:
+                p1_one = p1_two / 2
+            else:
+                p1_one = 1 - (p1_two / 2)
+        else:
+            p1_one = np.nan
+        infer_results.append(f"One-sample t-test for mean(bat_landing_to_food) > {baseline} s:")
+        infer_results.append(f"  n = {len(arr)}, sample mean = {arr.mean():.4f}, t-statistic = {t1_stat:.4f}, p-value (two-sided) = {p1_two:.6f}, p-value (one-sided mean>baseline) = {p1_one:.6f}")
+    else:
+        infer_results.append("Not enough observations for one-sample t-test on bat_landing_to_food.")
+else:
+    infer_results.append("Dataset1: 'bat_landing_to_food' missing — cannot run one-sample t-test.")
+
+# Correlation significance (rat minutes/arrivals vs bat landings)
+if set(["rat_arrival_number", "bat_landing_number"]).issubset(df2.columns):
+    # pearsonr ignores NaNs, so drop pairs with NaN
+    sub = df2[["rat_arrival_number", "bat_landing_number"]].dropna()
+    if len(sub) > 1:
+        r_arrivals, p_arrivals = st.pearsonr(sub["rat_arrival_number"].astype(float), sub["bat_landing_number"].astype(float))
+        infer_results.append(f"Pearson correlation between rat_arrival_number and bat_landing_number: r = {r_arrivals:.4f}, p = {p_arrivals:.6f}")
+    else:
+        infer_results.append("Not enough paired observations for correlation (rat_arrival_number vs bat_landing_number).")
+else:
+    infer_results.append("Dataset2: required columns for correlation not found.")
+
+if set(["rat_minutes", "bat_landing_number"]).issubset(df2.columns):
+    sub = df2[["rat_minutes", "bat_landing_number"]].dropna()
+    if len(sub) > 1:
+        r_minutes, p_minutes = st.pearsonr(sub["rat_minutes"].astype(float), sub["bat_landing_number"].astype(float))
+        infer_results.append(f"Pearson correlation between rat_minutes and bat_landing_number: r = {r_minutes:.4f}, p = {p_minutes:.6f}")
+    else:
+        infer_results.append("Not enough paired observations for correlation (rat_minutes vs bat_landing_number).")
+else:
+    infer_results.append("Dataset2: required columns for correlation not found (rat_minutes).")
