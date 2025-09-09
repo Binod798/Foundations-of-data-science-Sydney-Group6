@@ -158,7 +158,7 @@ else:
     infer_results.append("Dataset1: 'risk' column not found — cannot compute proportion CI.")
     # Inferential analysis
 
-# --- 3.1 Confidence interval for proportion of risk-taking (binary) ---
+# Confidence interval for proportion of risk-taking (binary)
 if "risk" in df1.columns:
     # dropna and convert to ints (0/1)
     risk_series = df1["risk"].dropna().astype(int)
@@ -177,7 +177,7 @@ if "risk" in df1.columns:
 else:
     infer_results.append("Dataset1: 'risk' column not found — cannot compute proportion CI.")
 
-# --- 3.2 Confidence interval for mean 'bat_landing_to_food' (z-based and t-based) ---
+# Confidence interval for mean 'bat_landing_to_food' (z-based and t-based)
 if "bat_landing_to_food" in df1.columns:
     s = df1["bat_landing_to_food"].dropna().astype(float)
     n = len(s)
@@ -212,7 +212,7 @@ if "bat_landing_to_food" in df1.columns:
 else:
     infer_results.append("Dataset1: 'bat_landing_to_food' column not found — cannot compute mean CI.")
 
-# --- 3.3 Hypothesis test: Two-sample t-test on bat landings per 30-min periods (rats present vs absent) ---
+# Hypothesis test: Two-sample t-test on bat landings per 30-min periods (rats present vs absent)
 if set(["bat_landing_number", "rat_arrival_number"]).issubset(df2.columns):
     # Define groups: rat_arrival_number == 0 vs >0
     group_no_rats = df2.loc[df2["rat_arrival_number"].fillna(0) == 0, "bat_landing_number"].dropna().astype(float)
@@ -251,8 +251,8 @@ if set(["bat_landing_number", "rat_arrival_number"]).issubset(df2.columns):
 else:
     infer_results.append("Dataset2: required columns 'bat_landing_number' or 'rat_arrival_number' missing — cannot run two-sample t-test.")
 
-# --- 3.4 One-sample t-test: mean bat_landing_to_food greater than baseline (e.g., 2 seconds) ---
-# This is a domain choice: here we test H0: mean = 2s vs H1: mean > 2s (bats show non-trivial vigilance)
+# One-sample t-test
+# This is a domain choice: here we test H0: mean = 2s vs H1: mean > 2s
 baseline = 2.0
 if "bat_landing_to_food" in df1.columns:
     arr = df1["bat_landing_to_food"].dropna().astype(float)
@@ -294,3 +294,47 @@ if set(["rat_minutes", "bat_landing_number"]).issubset(df2.columns):
         infer_results.append("Not enough paired observations for correlation (rat_minutes vs bat_landing_number).")
 else:
     infer_results.append("Dataset2: required columns for correlation not found (rat_minutes).")
+# Chi-square Tests: Risk/Reward vs Rat Presence
+# Ensure rat_present is available in df2
+if "rat_minutes" in df2.columns:
+    df2["rat_present"] = (df2["rat_minutes"] > 0).astype(int)
+
+# Merge datasets by bin if available, else align by index length
+if "bin" in df1.columns and "bin" in df2.columns:
+    merged = pd.merge(df1, df2[["bin", "rat_present"]], on="bin", how="left")
+else:
+    # fallback: truncate to same length
+    min_len = min(len(df1), len(df2))
+    merged = df1.iloc[:min_len].copy()
+    merged["rat_present"] = df2["rat_present"].iloc[:min_len].values
+
+# Chi-square: Risk vs Rat Presence
+if set(["risk", "rat_present"]).issubset(merged.columns):
+    contingency_risk = pd.crosstab(merged["risk"], merged["rat_present"])
+    chi2, p, dof, expected = st.chi2_contingency(contingency_risk)
+    infer_results.append("\nChi-square Test: Risk vs Rat Presence")
+    infer_results.append(str(contingency_risk))
+    infer_results.append(f"  chi2 = {chi2:.4f}, p-value = {p:.6f}, dof = {dof}")
+
+# Chi-square: Reward vs Rat Presence
+if set(["reward", "rat_present"]).issubset(merged.columns):
+    contingency_rew = pd.crosstab(merged["reward"], merged["rat_present"])
+    chi2, p, dof, expected = st.chi2_contingency(contingency_rew)
+    infer_results.append("\nChi-square Test: Reward vs Rat Presence")
+    infer_results.append(str(contingency_rew))
+    infer_results.append(f"  chi2 = {chi2:.4f}, p-value = {p:.6f}, dof = {dof}")
+
+# Save inferential result text
+summary_path = summary_dir / "investigation_A_inferential_summary.txt"
+with open(summary_path, "w", encoding="utf-8") as f:
+    f.write("Investigation A — Inferential Statistics Summary\n")
+    f.write("==============================================\n")
+    for line in infer_results:
+        f.write(line + "\n")
+
+# Print results to console
+print("\n--- Inferential Statistics Results ---")
+for line in infer_results:
+    print(line)
+
+print(f"\nText summary saved to: {summary_path}")
