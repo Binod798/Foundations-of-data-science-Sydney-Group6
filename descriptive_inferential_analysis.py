@@ -101,5 +101,38 @@ if "risk" in df1.columns:
     plt.tight_layout()
     plt.savefig(charts_dir / "d1_bar_risk_counts.png")
     plt.close()
+# Scatter plot: rat_arrivals vs bat_landings
+if set(["rat_arrival_number", "bat_landing_number"]).issubset(df2.columns):
+    plt.figure()
+    plt.scatter(df2["rat_arrival_number"], df2["bat_landing_number"])
+    plt.title("Descriptive Statistics – Scatter Plot – Rat Arrivals vs Bat Landings")
+    plt.xlabel("Rat arrival number (per 30 min)")
+    plt.ylabel("Bat landing number (per 30 min)")
+    plt.tight_layout()
+    plt.savefig(charts_dir / "d2_scatter_rat_arrivals_vs_bat_landings.png")
+    plt.close()
 
-    
+# Scatter plot: rat_minutes vs bat_landings
+if set(["rat_minutes", "bat_landing_number"]).issubset(df2.columns):
+    plt.figure()
+    plt.scatter(df2["rat_minutes"], df2["bat_landing_number"])
+    plt.title("Descriptive Statistics – Scatter Plot – Rat Minutes vs Bat Landings")
+    plt.xlabel("Rat minutes (per 30 min)")
+    plt.ylabel("Bat landing number (per 30 min)")
+    plt.tight_layout()
+    plt.savefig(charts_dir / "d2_scatter_rat_minutes_vs_bat_landings.png")
+    plt.close()
+    # Histogram: food availability
+if set(["rat_minutes", "bat_landing_number"]).issubset(df2.columns):
+    plt.hist(df2["food_availability"].dropna(), bins=20, color="brown", edgecolor="black")
+    plt.title("Descriptive Statistics - Histogram - Food Availability")
+    plt.xlabel("Food Availability")
+    plt.ylabel("Frequency")
+    plt.savefig(charts_dir /"d2_hist_food_availability.png")
+    plt.close()
+
+print("Descriptive charts saved in:", charts_dir)
+
+infer_results = []
+summary_dir = Path(".")
+summary_dir.mkdir(exist_ok=True)
