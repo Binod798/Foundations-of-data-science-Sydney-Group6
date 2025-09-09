@@ -1,0 +1,38 @@
+Investigation A — Inferential Statistics Summary
+==============================================
+Proportion of risk-taking (dataset1):
+  n = 907, successes = 449, proportion = 0.4950
+  95% CI (normal approx) = (0.4625, 0.5276)
+  95% CI (Wilson) = (0.4626, 0.5275)
+Proportion of risk-taking (dataset1):
+  n = 907, successes = 449, proportion = 0.4950
+  95% CI (normal approx) = (0.4625, 0.5276)
+  95% CI (Wilson) = (0.4626, 0.5275)
+Mean of bat_landing_to_food (dataset1):
+  n = 907, mean = 11.7131 s, sd = 27.6444 s, se = 0.917918
+  95% CI (z-based using norm.ppf) = (9.9140, 13.5122)
+  95% CI (t-based) = (9.9116, 13.5146)
+  95% CI (statsmodels _zconfint_generic) = (9.9140, 13.5122)
+Two-sample t-test: bat landings per 30-min (no rats vs rats present):
+  n(no rats) = 1578, mean = 33.6071, sd = 26.4728
+  n(with rats) = 545, mean = 27.6716, sd = 22.3934
+  t-statistic = 5.0818, p-value = 0.000000 (two-sided)
+  Welch df approx = 1106.92, one-sided p (no_rats > with_rats) = 0.000000
+One-sample t-test for mean(bat_landing_to_food) > 2.0 s:
+  n = 907, sample mean = 11.7131, t-statistic = 10.5817, p-value (two-sided) = 0.000000, p-value (one-sided mean>baseline) = 0.000000
+Pearson correlation between rat_arrival_number and bat_landing_number: r = -0.0735, p = 0.000697
+Pearson correlation between rat_minutes and bat_landing_number: r = -0.1462, p = 0.000000
+
+Chi-square Test: Risk vs Rat Presence
+rat_present    0   1
+risk                
+0            401  57
+1            374  75
+  chi2 = 2.9726, p-value = 0.084684, dof = 1
+
+Chi-square Test: Reward vs Rat Presence
+rat_present    0   1
+reward              
+0            353  70
+1            422  62
+  chi2 = 2.2453, p-value = 0.134022, dof = 1
