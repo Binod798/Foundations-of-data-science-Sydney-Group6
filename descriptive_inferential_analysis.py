@@ -86,7 +86,7 @@ if "bat_landing_to_food" in df1.columns:
     plt.savefig(charts_dir / "d1_hist_bat_landing_to_food.png")
     plt.close()
 
-# Chart: seconds_after_rat_arrival
+ # Histogram: seconds after rat arrival
 if "seconds_after_rat_arrival" in df1.columns:
     plt.hist(df1["seconds_after_rat_arrival"].dropna(), bins=20, color="orange", edgecolor="black")
     plt.title("Descriptive Statistics - Histogram - Seconds After Rat Arrival")
@@ -101,13 +101,14 @@ if "seconds_after_rat_arrival" in df1.columns:
     plt.title("Descriptive Statistics - Grouped Bar Chart - Risk vs Reward")
     plt.xlabel("Risk Behaviour")
     plt.ylabel("Count")
+    # Annotate counts on bars
     for i, row in enumerate(risk_reward.values):
         for j, val in enumerate(row):
             plt.text(i + j*0.2, val + 0.5, str(val), ha="center")
     plt.savefig(charts_dir /"d1_grouped_bar_risk_reward.png")
     plt.close()
 
-# Bar chart: risk countings
+# Bar chart: counts of risk-taking vs avoidance
 if "risk" in df1.columns:
     plt.figure()
     df1["risk"].value_counts(dropna=False).sort_index().plot(kind="bar")
@@ -138,7 +139,7 @@ if set(["rat_minutes", "bat_landing_number"]).issubset(df2.columns):
     plt.tight_layout()
     plt.savefig(charts_dir / "d2_scatter_rat_minutes_vs_bat_landings.png")
     plt.close()
-    # Histogram: food availability
+# Histogram: food availability
 if set(["rat_minutes", "bat_landing_number"]).issubset(df2.columns):
     plt.hist(df2["food_availability"].dropna(), bins=20, color="brown", edgecolor="black")
     plt.title("Descriptive Statistics - Histogram - Food Availability")
